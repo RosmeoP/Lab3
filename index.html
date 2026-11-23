@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      try {
+        var s = localStorage.getItem('color-scheme');
+        if (s === 'light' || s === 'dark') {
+          document.querySelector('meta[name="color-scheme"]').content = s;
+        }
+      } catch (e) {}
+    </script>
+    <title>Proyecta — Gestor de Proyectos y Tareas</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="stylesheet" href="./src/styles/main.css" />
+  </head>
+  <body>
+    <!-- ==================== VISTA DE AUTENTICACIÓN ==================== -->
+    <section id="auth-view" class="auth-split" hidden>
+      <!-- Panel izquierdo: escaparate visual de Proyecta -->
+      <aside class="auth-showcase" aria-hidden="true">
+        <div class="showcase-halftone"></div>
+
+        <div class="showcase-brand">
+          <svg class="showcase-brand-icon" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="4" width="4" height="16" rx="2" fill="currentColor" />
+            <rect x="10" y="7" width="4" height="13" rx="2" fill="currentColor" opacity="0.85" />
+            <rect x="17" y="10" width="4" height="10" rx="2" fill="currentColor" opacity="0.65" />
+          </svg>
+          <span class="showcase-brand-name">PROYECTA</span>
+        </div>
+
+        <div class="showcase-stage">
+          <div class="float-node float-node-top">
+            <span class="float-node-box">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="none">
+                <path d="M4 10.5l3.5 3.5L16 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </span>
+            <span class="float-node-line"></span>
+          </div>
+
+          <div class="showcase-preview-card">
+            <div class="preview-tabs">
+              <span class="preview-tab is-active">
+                <svg viewBox="0 0 18 18" width="14" height="14" fill="none">
+                  <rect x="2" y="3" width="14" height="12" rx="2.5" stroke="currentColor" stroke-width="1.5" />
+                  <path d="M5.5 7.5h7M5.5 10.5h4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+                Tablero de Proyectos
+              </span>
+              <span class="preview-tab">
+                <svg viewBox="0 0 18 18" width="14" height="14" fill="none">
+                  <path d="M9 4v10M4 9h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+                Nuevo Entregable
+              </span>
+            </div>
+
+            <p class="preview-copy">
+              Organiza tus entregas, prioriza objetivos y mantén cada proyecto bajo control.
+              Centraliza clientes, fechas límite y avances en web y escritorio.
+            </p>
+
+            <div class="preview-pills">
+              <span class="preview-pill is-active">
+                <span class="pill-dot"></span> Planificación
+              </span>
+              <span class="preview-pill">En progreso</span>
+              <span class="preview-pill">Revisión</span>
+              <span class="preview-pill">Completado</span>
+            </div>
+          </div>
+
+          <div class="float-node float-node-bottom">
+            <span class="float-node-line"></span>
+            <span class="float-node-box float-node-letter">P</span>
+          </div>
+        </div>
+
+        <div class="showcase-headline">
+          <p>A un clic de controlar<br />cada proyecto</p>
+        </div>
+      </aside>
+
+      <!-- Panel derecho: formulario limpio de registro / inicio de sesión -->
+      <main class="auth-panel">
+        <div class="auth-panel-top">
+          <span class="env-pill" data-env-badge>Cargando…</span>
+          <button type="button" class="icon-btn theme-toggle-btn" data-action="toggle-theme">
+            <span class="theme-opt-dark">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+              <span class="visually-hidden">Cambiar a tema oscuro</span>
+            </span>
+            <span class="theme-opt-light">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+              </svg>
+              <span class="visually-hidden">Cambiar a tema claro</span>
+            </span>
+          </button>
+        </div>
+
+        <div class="auth-form-wrap">
+          <div id="auth-alert" class="form-alert" role="alert" hidden></div>
+
+          <!-- Panel de Registro -->
+          <div id="register-panel">
+            <header class="auth-copy">
+              <h1>Crear una cuenta</h1>
+              <p>Estás a unos segundos de organizar tus proyectos.</p>
+            </header>
+
+            <form id="register-form" class="editorial-form">
+              <label class="checkbox-row">
+                <input type="checkbox" id="reg-starter" name="includeStarter" checked />
+                <span>Incluir 2 proyectos de ejemplo al comenzar</span>
+              </label>
+
+              <div class="field">
+                <label for="reg-name">Nombre completo</label>
+                <input
+                  type="text"
+                  id="reg-name"
+                  name="full-name"
+                  autocomplete="name"
+                  enterkeyhint="next"
+                  required
+                  minlength="2"
+                  placeholder="Ingresa tu nombre completo"
+                  data-error="reg-name-error"
+                />
+                <div id="reg-name-error" class="error-msg">
+                  Error: Escribe tu nombre completo (mínimo 2 caracteres).
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="reg-email">Correo electrónico</label>
+                <span id="reg-email-hint" class="hint">Formato: nombre@ejemplo.com</span>
+                <input
+                  type="email"
+                  id="reg-email"
+                  name="email"
+                  autocomplete="username"
+                  spellcheck="false"
+                  enterkeyhint="next"
+                  required
+                  aria-describedby="reg-email-hint"
+                  placeholder="Ingresa tu correo electrónico"
+                  data-error="reg-email-error"
+                />
+                <div id="reg-email-error" class="error-msg">
+                  Error: Ingresa un correo electrónico con formato válido.
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="reg-password">Contraseña</label>
+                <span id="reg-password-rules" class="hint">Mínimo 8 caracteres, incluyendo letras y números.</span>
+                <div class="input-with-icon">
+                  <input
+                    type="password"
+                    id="reg-password"
+                    name="new-password"
+                    autocomplete="new-password"
+                    enterkeyhint="done"
+                    required
+                    minlength="8"
+                    pattern="(?=.*[A-Za-z])(?=.*\d).{8,}"
+                    aria-describedby="reg-password-rules"
+                    placeholder="••••••••••"
+                    data-error="reg-password-error"
+                  />
+                  <button
+                    type="button"
+                    class="pw-eye-btn"
+                    data-toggle-password="reg-password"
+                    aria-label="Mostrar contraseña"
+                    aria-pressed="false"
+                  >
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  </button>
+                </div>
+                <div id="reg-password-error" class="error-msg">
+                  Error: La contraseña debe tener mínimo 8 caracteres e incluir letras y números.
+                </div>
+              </div>
+
+              <p class="auth-terms">
+                Al registrarte, tus proyectos se guardan localmente de forma segura en tu equipo.
+              </p>
+
+              <button type="submit" class="btn-editorial-primary">Crear cuenta</button>
+            </form>
+
+            <div class="auth-divider"><span>o</span></div>
+
+            <button type="button" class="btn-editorial-secondary" data-action="demo-login">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <rect x="3" y="3" width="6" height="6" rx="1.5" />
+                <rect x="11" y="3" width="6" height="6" rx="1.5" />
+                <rect x="3" y="11" width="6" height="6" rx="1.5" />
+                <rect x="11" y="11" width="6" height="6" rx="1.5" />
+              </svg>
+              Continuar con cuenta demo
+            </button>
+
+            <p class="auth-switch-line">
+              ¿Ya tienes una cuenta?
+              <button type="button" id="switch-to-login" class="inline-link-btn">Iniciar sesión</button>
+            </p>
+          </div>
+
+          <!-- Panel de Inicio de sesión -->
+          <div id="login-panel" hidden>
+            <header class="auth-copy">
+              <h1>Iniciar sesión</h1>
+              <p>Retoma el seguimiento de tus proyectos y entregables.</p>
+            </header>
+
+            <form id="login-form" class="editorial-form">
+              <div class="field">
+                <label for="login-email">Correo electrónico</label>
+                <input
+                  type="email"
+                  id="login-email"
+                  name="email"
+                  autocomplete="username"
+                  spellcheck="false"
+                  enterkeyhint="next"
+                  required
+                  placeholder="Ingresa tu correo electrónico"
+                  data-error="login-email-error"
+                />
+                <div id="login-email-error" class="error-msg">
+                  Error: Ingresa un correo electrónico válido (ejemplo: tu@correo.com).
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="login-password">Contraseña</label>
+                <div class="input-with-icon">
+                  <input
+                    type="password"
+                    id="login-password"
+                    name="password"
+                    autocomplete="current-password"
+                    enterkeyhint="done"
+                    required
+                    placeholder="••••••••••"
+                    data-error="login-password-error"
+                  />
+                  <button
+                    type="button"
+                    class="pw-eye-btn"
+                    data-toggle-password="login-password"
+                    aria-label="Mostrar contraseña"
+                    aria-pressed="false"
+                  >
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  </button>
+                </div>
+                <div id="login-password-error" class="error-msg">
+                  Error: Ingresa tu contraseña para continuar.
+                </div>
+              </div>
+
+              <button type="submit" class="btn-editorial-primary">Iniciar sesión</button>
+            </form>
+
+            <div class="auth-divider"><span>o</span></div>
+
+            <button type="button" class="btn-editorial-secondary" data-action="demo-login">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <rect x="3" y="3" width="6" height="6" rx="1.5" />
+                <rect x="11" y="3" width="6" height="6" rx="1.5" />
+                <rect x="3" y="11" width="6" height="6" rx="1.5" />
+                <rect x="11" y="11" width="6" height="6" rx="1.5" />
+              </svg>
+              Continuar con cuenta demo
+            </button>
+
+            <p class="auth-switch-line">
+              ¿Aún no tienes una cuenta?
+              <button type="button" id="switch-to-register" class="inline-link-btn">Crear cuenta</button>
+            </p>
+          </div>
+        </div>
+      </main>
+    </section>
+
+    <!-- ==================== VISTA PRINCIPAL (DASHBOARD) ==================== -->
+    <div id="app-view" class="app-shell" hidden>
+      <header class="topbar">
+        <div class="topbar-inner">
+          <div class="topbar-left">
+            <div class="topbar-brand-lockup">
+              <svg class="showcase-brand-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="3" y="4" width="4" height="16" rx="2" fill="currentColor" />
+                <rect x="10" y="7" width="4" height="13" rx="2" fill="currentColor" opacity="0.85" />
+                <rect x="17" y="10" width="4" height="10" rx="2" fill="currentColor" opacity="0.65" />
+              </svg>
+              <span class="topbar-brand">PROYECTA</span>
+            </div>
+            <span class="env-pill env-pill-inline" data-env-badge>Web</span>
+          </div>
+
+          <div class="topbar-right">
+            <button
+              type="button"
+              id="btn-reveal-data"
+              class="btn btn-ghost btn-sm"
+              hidden
+              title="Abrir carpeta donde Electron guarda proyecta-data.json"
+            >
+              Ver archivo JSON
+            </button>
+
+            <button type="button" class="icon-btn theme-toggle-btn" data-action="toggle-theme">
+              <span class="theme-opt-dark">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+                <span class="visually-hidden">Cambiar a tema oscuro</span>
+              </span>
+              <span class="theme-opt-light">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                </svg>
+                <span class="visually-hidden">Cambiar a tema claro</span>
+              </span>
+            </button>
+
+            <div class="user-chip">
+              <span id="user-avatar" class="user-avatar" aria-hidden="true">U</span>
+              <div class="user-meta">
+                <strong id="user-name">Usuario</strong>
+                <small id="user-role">Gestor de Proyectos</small>
+              </div>
+            </div>
+
+            <button type="button" id="btn-logout" class="btn btn-secondary btn-sm">
+              Cerrar sesión
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <section class="hero-bar">
+          <div class="hero-halftone" aria-hidden="true"></div>
+          <div class="hero-copy">
+            <span class="hero-eyebrow">Espacio de trabajo</span>
+            <h1>Panel de Proyectos y Tareas</h1>
+            <p class="muted">
+              Organiza tus entregas, prioriza objetivos y mantén cada proyecto bajo control.
+            </p>
+          </div>
+          <div class="hero-actions">
+            <button type="button" id="btn-import-json" class="btn btn-secondary">
+              Importar JSON
+            </button>
+            <input type="file" id="import-file-input" accept="application/json,.json" hidden />
+            <button type="button" id="btn-export-json" class="btn btn-secondary">
+              Exportar JSON
+            </button>
+            <button type="button" id="btn-new-project" class="btn btn-primary">
+              + Nuevo proyecto
+            </button>
+          </div>
+        </section>
+
+        <!-- Tarjetas de métricas -->
+        <section class="metrics-grid" aria-label="Resumen de proyectos">
+          <article class="metric-card">
+            <span class="metric-label"><span class="metric-dot metric-dot-neutral"></span>Total de proyectos</span>
+            <strong id="metric-total" class="metric-value">0</strong>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label"><span class="metric-dot metric-dot-info"></span>Activos</span>
+            <strong id="metric-progress" class="metric-value">0</strong>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label"><span class="metric-dot metric-dot-success"></span>Completados</span>
+            <strong id="metric-completed" class="metric-value">0</strong>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label"><span class="metric-dot metric-dot-danger"></span>Urgentes</span>
+            <strong id="metric-urgent" class="metric-value">0</strong>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label"><span class="metric-dot metric-dot-primary"></span>Avance promedio</span>
+            <strong id="metric-avg" class="metric-value">0%</strong>
+          </article>
+        </section>
+
+        <!-- Barra de filtros y búsqueda -->
+        <section class="filters-bar" aria-label="Filtros y búsqueda">
+          <div class="search-wrap">
+            <label for="filter-search" class="visually-hidden">Buscar proyectos</label>
+            <input
+              type="search"
+              id="filter-search"
+              placeholder="Buscar por proyecto, cliente, categoría o notas…"
+              enterkeyhint="search"
+            />
+          </div>
+
+          <div class="filter-controls">
+            <label class="select-group">
+              <span>Estado</span>
+              <select id="filter-status">
+                <option value="todos">Todos</option>
+                <option value="pendiente">Pendiente</option>
+                <option value="en_progreso">En progreso</option>
+                <option value="en_revision">En revisión</option>
+                <option value="completado">Completado</option>
+              </select>
+            </label>
+
+            <label class="select-group">
+              <span>Prioridad</span>
+              <select id="filter-priority">
+                <option value="todas">Todas</option>
+                <option value="urgente">Urgente</option>
+                <option value="alta">Alta</option>
+                <option value="media">Media</option>
+                <option value="baja">Baja</option>
+              </select>
+            </label>
+
+            <label class="select-group">
+              <span>Ordenar</span>
+              <select id="filter-sort">
+                <option value="updated">Más recientes</option>
+                <option value="dueDate">Fecha límite</option>
+                <option value="priority">Mayor prioridad</option>
+                <option value="progress">Mayor avance</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <!-- Listado de proyectos -->
+        <section aria-label="Lista de proyectos">
+          <div id="projects-grid" class="projects-grid"></div>
+          <div id="empty-state" class="empty-state" hidden>
+            <h2>No hay proyectos que mostrar</h2>
+            <p class="muted">
+              Crea tu primer proyecto o ajusta los filtros de búsqueda para ver resultados.
+            </p>
+            <button type="button" id="btn-empty-new" class="btn btn-primary">
+              + Crear proyecto
+            </button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- ==================== MODAL CREAR / EDITAR PROYECTO ==================== -->
+    <dialog id="project-dialog" class="modal-dialog" aria-labelledby="project-dialog-title">
+      <div class="modal-header">
+        <h2 id="project-dialog-title">Nuevo proyecto</h2>
+        <button type="button" id="btn-close-project-dialog" class="icon-btn" aria-label="Cerrar formulario">
+          ✕
+        </button>
+      </div>
+
+      <form id="project-form" class="modal-body stack-form">
+        <input type="hidden" id="project-id" name="id" />
+
+        <div class="field">
+          <label for="project-name">Nombre del proyecto o tarea</label>
+          <input
+            type="text"
+            id="project-name"
+            name="name"
+            required
+            minlength="2"
+            autofocus
+            placeholder="Ej. Implementación de módulo de reportes"
+            data-error="project-name-error"
+          />
+          <div id="project-name-error" class="error-msg">
+            Error: Ingresa un nombre para el proyecto (mínimo 2 caracteres).
+          </div>
+        </div>
+
+        <div class="field-grid-2">
+          <div class="field">
+            <label for="project-client">Cliente o área responsable</label>
+            <input
+              type="text"
+              id="project-client"
+              name="client"
+              required
+              placeholder="Ej. Finanzas, Cliente Acme, Lab 3"
+              data-error="project-client-error"
+            />
+            <div id="project-client-error" class="error-msg">
+              Error: Indica el cliente o área responsable.
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="project-category">Categoría</label>
+            <input
+              type="text"
+              id="project-category"
+              name="category"
+              list="category-suggestions"
+              placeholder="Ej. Desarrollo Web"
+            />
+            <datalist id="category-suggestions">
+              <option value="Desarrollo Web"></option>
+              <option value="Multiplataforma"></option>
+              <option value="Diseño UI/UX"></option>
+              <option value="Investigación"></option>
+              <option value="Operaciones"></option>
+              <option value="Académico"></option>
+            </datalist>
+          </div>
+        </div>
+
+        <div class="field-grid-3">
+          <div class="field">
+            <label for="project-status">Estado</label>
+            <select id="project-status" name="status" required>
+              <option value="pendiente">Pendiente</option>
+              <option value="en_progreso">En progreso</option>
+              <option value="en_revision">En revisión</option>
+              <option value="completado">Completado</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="project-priority">Prioridad</label>
+            <select id="project-priority" name="priority" required>
+              <option value="baja">Baja</option>
+              <option value="media" selected>Media</option>
+              <option value="alta">Alta</option>
+              <option value="urgente">Urgente</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="project-due-date">Fecha límite</label>
+            <input type="date" id="project-due-date" name="dueDate" />
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="range-header">
+            <label for="project-progress">Porcentaje de avance</label>
+            <output id="project-progress-output" for="project-progress">0%</output>
+          </div>
+          <input
+            type="range"
+            id="project-progress"
+            name="progress"
+            min="0"
+            max="100"
+            step="5"
+            value="0"
+          />
+        </div>
+
+        <div class="field">
+          <label for="project-notes">Notas y entregables</label>
+          <textarea
+            id="project-notes"
+            name="notes"
+            rows="4"
+            placeholder="Describe objetivos, tareas clave, dependencias o acuerdos con el cliente…"
+          ></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="btn-cancel-project" class="btn btn-secondary">
+            Cancelar
+          </button>
+          <button type="submit" id="btn-save-project" class="btn btn-primary">
+            Guardar proyecto
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- ==================== MODAL CONFIRMACIÓN ELIMINAR ==================== -->
+    <dialog
+      id="confirm-dialog"
+      class="modal-dialog modal-dialog-sm"
+      closedby="any"
+      aria-labelledby="confirm-dialog-title"
+    >
+      <div class="modal-header">
+        <h2 id="confirm-dialog-title">Eliminar proyecto</h2>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-dialog-message">
+          ¿Seguro que deseas eliminar este registro? Esta acción no se puede deshacer.
+        </p>
+      </div>
+      <form method="dialog" class="modal-footer">
+        <button type="submit" value="cancel" class="btn btn-secondary" autofocus>
+          Cancelar
+        </button>
+        <button type="submit" value="confirm" class="btn btn-danger">
+          Eliminar
+        </button>
+      </form>
+    </dialog>
+
+    <!-- Notificación tipo toast -->
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
+
