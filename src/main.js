@@ -58,7 +58,6 @@ const el = {
   registerPanel: document.getElementById('register-panel'),
   loginForm: document.getElementById('login-form'),
   registerForm: document.getElementById('register-form'),
-  regStarter: document.getElementById('reg-starter'),
   authAlert: document.getElementById('auth-alert'),
 
   userName: document.getElementById('user-name'),
@@ -427,21 +426,16 @@ function bindEvents() {
     event.preventDefault();
     showAuthAlert('');
     const formData = new FormData(el.registerForm);
-    const includeStarterProjects = Boolean(el.regStarter?.checked);
     try {
       state.user = await registerUser({
         fullName: formData.get('full-name'),
         email: formData.get('email'),
         password: formData.get('new-password'),
-        includeStarterProjects,
+        includeStarterProjects: false,
       });
       el.registerForm.reset();
       renderView();
-      showToast(
-        includeStarterProjects
-          ? 'Cuenta creada con éxito. Se agregaron 2 proyectos de ejemplo.'
-          : 'Cuenta creada con éxito.'
-      );
+      showToast('Cuenta creada con éxito.');
     } catch (error) {
       showAuthAlert(error.message || 'No se pudo completar el registro.');
     }

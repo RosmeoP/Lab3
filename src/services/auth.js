@@ -39,7 +39,7 @@ export async function registerUser({
   email,
   password,
   role = '',
-  includeStarterProjects = true,
+  includeStarterProjects = false,
 }) {
   const cleanName = String(fullName || '').trim();
   const cleanEmail = normalizeEmail(email);
