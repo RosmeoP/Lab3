@@ -90,7 +90,9 @@ const el = {
   projectDialog: document.getElementById('project-dialog'),
   projectDialogTitle: document.getElementById('project-dialog-title'),
   projectForm: document.getElementById('project-form'),
-  btnCloseProjectDialog: document.getElementById('btn-close-project-dialog'),
+  btnRailClose: document.getElementById('btn-rail-close'),
+  btnRailNewProject: document.getElementById('btn-rail-new-project'),
+  railProjectList: document.getElementById('rail-project-list'),
   btnCancelProject: document.getElementById('btn-cancel-project'),
   btnSaveProject: document.getElementById('btn-save-project'),
 
@@ -98,8 +100,6 @@ const el = {
   projectName: document.getElementById('project-name'),
   projectClient: document.getElementById('project-client'),
   projectCategory: document.getElementById('project-category'),
-  projectStatus: document.getElementById('project-status'),
-  projectPriority: document.getElementById('project-priority'),
   projectDueDate: document.getElementById('project-due-date'),
   projectProgress: document.getElementById('project-progress'),
   projectProgressOutput: document.getElementById('project-progress-output'),
@@ -283,33 +283,76 @@ function buildProjectCard(project) {
   return card;
 }
 
-function openProjectDialog(project = null) {
+function setRadioValue(name, value) {
+  const input = el.projectForm.querySelector(`input[name="${name}"][value="${value}"]`);
+  if (input) input.checked = true;
+}
+
+function getRadioValue(name, fallback) {
+  const checked = el.projectForm.querySelector(`input[name="${name}"]:checked`);
+  return checked ? checked.value : fallback;
+}
+
+function renderRailProjectList(activeId) {
+  if (!state.user || !el.railProjectList) return;
+  const projects = getUserProjects(state.user.id);
+  el.railProjectList.innerHTML = '';
+
+  if (projects.length === 0) {
+    const empty = document.createElement('span');
+    empty.className = 'rail-subheading';
+    empty.textContent = 'Sin proyectos guardados aún';
+    el.railProjectList.append(empty);
+    return;
+  }
+
+  for (const project of projects) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `rail-project-item${project.id === activeId ? ' is-active' : ''}`;
+    btn.dataset.railProjectId = project.id;
+    btn.innerHTML = `
+      <span class="rail-project-item-name">${escapeHtml(project.name)}</span>
+      <span aria-hidden="true">›</span>
+    `;
+    el.railProjectList.append(btn);
+  }
+}
+
+function populateProjectForm(project = null) {
   el.projectForm.reset();
 
   if (project) {
-    el.projectDialogTitle.textContent = 'Editar proyecto';
-    el.btnSaveProject.textContent = 'Guardar cambios';
+    el.projectDialogTitle.textContent = project.name || 'Editar proyecto';
+    el.btnSaveProject.textContent = 'Guardar';
     el.projectId.value = project.id;
     el.projectName.value = project.name || '';
     el.projectClient.value = project.client || '';
     el.projectCategory.value = project.category || '';
-    el.projectStatus.value = project.status || 'pendiente';
-    el.projectPriority.value = project.priority || 'media';
+    setRadioValue('status', project.status || 'pendiente');
+    setRadioValue('priority', project.priority || 'media');
     el.projectDueDate.value = project.dueDate || '';
     el.projectProgress.value = String(project.progress ?? 0);
     el.projectProgressOutput.textContent = `${project.progress ?? 0}%`;
     el.projectNotes.value = project.notes || '';
   } else {
     el.projectDialogTitle.textContent = 'Nuevo proyecto';
-    el.btnSaveProject.textContent = 'Guardar proyecto';
+    el.btnSaveProject.textContent = 'Guardar';
     el.projectId.value = '';
-    el.projectStatus.value = 'pendiente';
-    el.projectPriority.value = 'media';
+    setRadioValue('status', 'pendiente');
+    setRadioValue('priority', 'media');
     el.projectProgress.value = '0';
     el.projectProgressOutput.textContent = '0%';
   }
 
-  el.projectDialog.showModal();
+  renderRailProjectList(project?.id ?? '');
+}
+
+function openProjectDialog(project = null) {
+  populateProjectForm(project);
+  if (!el.projectDialog.open) {
+    el.projectDialog.showModal();
+  }
 }
 
 function openDeleteConfirmation(project) {
@@ -441,15 +484,28 @@ function bindEvents() {
   el.btnEmptyNew.addEventListener('click', () => openProjectDialog(null));
 
   // Modal crear / editar proyecto
-  el.btnCloseProjectDialog.addEventListener('click', () => el.projectDialog.close());
+  el.btnRailClose.addEventListener('click', () => el.projectDialog.close());
   el.btnCancelProject.addEventListener('click', () => el.projectDialog.close());
+  el.btnRailNewProject.addEventListener('click', () => {
+    populateProjectForm(null);
+    el.projectName.focus();
+  });
+
+  el.railProjectList.addEventListener('click', (event) => {
+    const btn = event.target.closest('button[data-rail-project-id]');
+    if (!btn || !state.user) return;
+    const project = getProjectById(state.user.id, btn.dataset.railProjectId);
+    if (project) {
+      populateProjectForm(project);
+    }
+  });
 
   el.projectProgress.addEventListener('input', () => {
     el.projectProgressOutput.textContent = `${el.projectProgress.value}%`;
   });
 
-  el.projectStatus.addEventListener('change', () => {
-    if (el.projectStatus.value === 'completado') {
+  el.projectForm.addEventListener('change', (event) => {
+    if (event.target?.name === 'status' && event.target.value === 'completado') {
       el.projectProgress.value = '100';
       el.projectProgressOutput.textContent = '100%';
     }
@@ -463,8 +519,8 @@ function bindEvents() {
       name: el.projectName.value,
       client: el.projectClient.value,
       category: el.projectCategory.value,
-      status: el.projectStatus.value,
-      priority: el.projectPriority.value,
+      status: getRadioValue('status', 'pendiente'),
+      priority: getRadioValue('priority', 'media'),
       dueDate: el.projectDueDate.value,
       progress: Number(el.projectProgress.value),
       notes: el.projectNotes.value,
